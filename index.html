@@ -3,76 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotline Bling Dance Party</title>
+    <title>Hotline Bling Dance Party Game</title>
     <style>
-        body {
-            background-color: #ffccff; /* Light pink background */
-            margin: 0;
-            font-family: "Arial", sans-serif;
-        }
-        h1, h2 {
-            color: #ff0066; /* Bright pink color */
-        }
-        .dialogue {
-            background-color: rgba(255, 0, 102, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-            width: 300px;
-            margin: 10px auto;
-            text-align: center;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        #gameCanvas {
-            border: 2px solid #ff0066;
-            background-color: white;
-            display: block;
-            margin: 20px auto;
-        }
-        .character {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            margin: 10px;
-            cursor: pointer;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f0f0f0; }
+        #gameCanvas { border: 1px solid #000; }
+        #dialogue { position: absolute; bottom: 10px; left: 10px; background: rgba(255, 255, 255, 0.8); padding: 10px; }
     </style>
 </head>
 <body>
-    <h1>Hotline Bling Dance Party</h1>
-    <div class="dialogue" id="dialogueBox">Welcome to the Hotline Bling Dance Party! Choose your character!</div>
-    <div id="characterSelection">
-        <img src="character1.png" class="character" onclick="selectCharacter('Character 1')" alt="Character 1">
-        <img src="character2.png" class="character" onclick="selectCharacter('Character 2')" alt="Character 2">
-        <img src="character3.png" class="character" onclick="selectCharacter('Character 3')" alt="Character 3">
-    </div>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <h1>Hotline Bling: Dance Party Game</h1>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="dialogue">Welcome to the Hotline Bling Dance Party! Choose your character!</div>
     <script>
+        // Character selection logic
+        const characters = ['Kass', 'Bücko'];
         let selectedCharacter = '';
-        const dialogueBox = document.getElementById('dialogueBox');
-        const gameCanvas = document.getElementById('gameCanvas');
-        const ctx = gameCanvas.getContext('2d');
 
         function selectCharacter(character) {
             selectedCharacter = character;
-            dialogueBox.innerHTML = `You selected ${character}! Get ready to dance!`;
+            updateDialogue(`You selected ${character}. Get ready to dance!`);
+            // Load game logic after selection
             startGame();
         }
 
-        function startGame() {
-            dialogueBox.style.display = 'none';
-            drawGame();
+        function updateDialogue(text) {
+            const dialogueDiv = document.getElementById('dialogue');
+            dialogueDiv.innerText = text;
         }
 
-        function drawGame() {
-            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-            // Example game drawing logic
-            ctx.fillStyle = '#ffccff';
-            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            ctx.fillStyle = '#ff0066';
-            ctx.fillText(`Dance with ${selectedCharacter}!`, 50, 50);
-            // Implement game mechanics here
+        function startGame() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            // Game initialization logic
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
+
+        // Sound effect logic
+        const soundEffect = new Audio('dance-music.mp3');
+        soundEffect.play();
     </script>
 </body>
 </html>
