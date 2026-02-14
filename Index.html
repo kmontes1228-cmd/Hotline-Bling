@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hotline Bling: Kass &amp; Bücko</title>
+  <style>
+    :root{
+      --accent:#ff4d6d;
+      --accent-2:#ff85a2;
+      --bg:#fff0f3;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; color:var(--accent);display:flex;align-items:center;justify-content:center}
+    .screen{display:none;position:relative;width:min(92%,420px);background:#fff;padding:22px;border-radius:26px;border:6px solid var(--accent);box-sizing:border-box;text-align:center}
+    .active{display:block}
+    #dialogueBox{min-height:120px;background:#fffafb;border-radius:16px;padding:14px;margin:14px 0;border:2px dashed var(--accent-2);color:#321}
+    .char-btn{cursor:pointer;width:100px;height:100px;border-radius:50%;border:3px solid var(--accent-2);overflow:hidden;display:inline-block;margin:10px;vertical-align:middle}
+    .char-btn img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-select:none}
+    canvas{background:#000 url('https://i.postimg.cc/QCdsFcRQ/IMG-8131.jpg') no-repeat center center;background-size:cover;border:5px solid var(--accent);border-radius:14px;touch-action:none;display:block;margin:10px auto}
+    .btn{background:var(--accent);color:#fff;border:none;padding:12px 20px;border-radius:18px;font-weight:700;cursor:pointer}
+    .score-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  </style>
+</head>
+<body>
+  <main>
+    <section id="storyScreen" class="screen active" aria-labelledby="storyTitle" role="region">
+      <h2 id="storyTitle">🌹 EL INDIO, SANTA ANA 🌹</h2>
+      <div id="dialogueBox" aria-live="polite">
+        <strong id="spk">Kass</strong><br>
+        <em id="txt">"Can you play some Bad Bunny?"</em>
+      </div>
+      <button class="btn" id="startBtn" onclick="nextDiag()" aria-label="Start story">Start ➔</button>
+    </section>
+
+    <section id="charScreen" class="screen" aria-labelledby="charTitle" role="dialog" aria-modal="true">
+      <h3 id="charTitle">Pick Your Character</h3>
+      <div class="char-btn" onclick="setChar('kass')" role="button" tabindex="0" aria-label="Choose Kass">
+        <img src="https://i.postimg.cc/Kzn4P7px/ECAD7BCF-0329-42E1-90FF-E727FB39F344.jpg" alt="Kass portrait" draggable="false">
+      </div>
+      <div class="char-btn" onclick="setChar('bucko')" role="button" tabindex="0" aria-label="Choose Bücko">
+        <img src="https://i.postimg.cc/xCKqvGp9/D88BFBF0-E308-463B-97BC-4F2E6AC3C92B.jpg" alt="Bücko portrait" draggable="false">
+      </div>
+    </section>
+
+    <section id="gameUI" class="screen" style="display:none" aria-labelledby="gameTitle" role="application">
+      <div class="score-bar">
+        <h2 id="gameTitle" style="margin:0;font-size:1.05rem">⚡ DANCE PARTY ⚡</h2>
+        <div>
+          <span style="font-weight:700;color:#111">Score: </span>
+          <span id="score" aria-live="polite">0</span>
+        </div>
+      </div>
+      <canvas id="gameCanvas" width="350" height="420" aria-label="Dance game canvas"></canvas>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+        <button class="btn" id="muteBtn" aria-pressed="false">Mute</button>
+        <button class="btn" id="replayBtn" style="display:none">Replay 🔄</button>
+      </div>
+    </section>
+
+    <section id="winScreen" class="screen" aria-labelledby="winTitle" role="dialog" style="display:none">
+      <img id="winImg" src="https://i.postimg.cc/t4MHcQQZ/24684BD2-E98D-4CFE-A2FB-B02B88511B9F.jpg" alt="Win image" style="width:100%;border-radius:12px;pointer-events:none" draggable="false">
+      <h3 id="winTitle">YOU BETTER PLAY IT!</h3>
+      <p>Be my Valentine Indefinitely ❤️</p>
+      <button class="btn" onclick="restartGame()" id="winReplay">Replay 🔄</button>
+    </section>
+  </main>
+
+  <audio id="msc" loop preload="none" crossorigin="anonymous">
+    <!-- Add your audio <source> here -->
+  </audio>
+
+  <script>
+    /* -------------------------
+       Story & UI
+       ------------------------- */
+    const script = [
+      ["Bücko", "\"We already played Bad Bunny but let me see... ;)\""],
+      ["Kass", "\"You better, I know where to find you.\""],
+      ["Bücko", "\"I hope you do.\""],
+      ["Narrator", "Later, on the dance floor, Bücko finds you with shots..."],
+      ["Bücko", "\"Aight, I'll make your hotline bling.\""]
+    ];
+    let line = 0;
+    const msc = document.getElementById('msc');
+
+    const heartImg = new Image();
+    heartImg.crossOrigin = "anonymous";
+    heartImg.src = 'https://i.postimg.cc/ryG82L3J/bad-bunny-heart.png';
+
+    const storyScreen = document.getElementById('storyScreen');
+    const charScreen = document.getElementById('charScreen');
+    const gameUI = document.getElementById('gameUI');
+    const winScreen = document.getElementById('winScreen');
+    const scoreEl = document.getElementById('score');
+    const muteBtn = document.getElementById('muteBtn');
+    const replayBtn = document.getElementById('replayBtn');
+
+    function nextDiag(){
+      msc.play().catch(()=>{});
+      if(line < script.length){
+        document.getElementById('spk').innerText = script[line][0];
+        document.getElementById('txt').innerText = script[line][1];
+        line++;
+      } else {
+        storyScreen.style.display = 'none';
+        charScreen.style.display = 'block';
+        charScreen.classList.add('active');
+      }
+    }
+
+    /* -------------------------
+       WebAudio for SFX
+       ------------------------- */
+    let audioCtx = null;
+    let masterGain = null;
+    function ensureAudioCtx(){
+      if(audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 1;
+      masterGain.connect(audioCtx.destination);
+      if(typeof audioCtx.createMediaElementSource === 'function' && msc){
+        try {
+          const src = audioCtx.createMediaElementSource(msc);
+          const musicGain = audioCtx.createGain();
+          musicGain.gain.value = 1;
+          src.connect(musicGain).connect(masterGain);
+        } catch(e){
+        }
+      }
+    }
+
+    function playCatchSound(){
+      ensureAudioCtx();
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(900 + Math.random()*200, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.25, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      o.connect(g).connect(masterGain);
+      o.start(now);
+      o.stop(now + 0.25);
+    }
+
+    function playWinSound(){
+      ensureAudioCtx();
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const freqs = [440, 660, 880];
+      freqs.forEach((f, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f * (1 + i*0.04), now + i*0.05);
+        g.gain.setValueAtTime(0.0001, now + i*0.05);
+        g.gain.exponentialRampToValueAtTime(0.35, now + i*0.05 + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + i*0.05 + 0.7);
+        o.connect(g).connect(masterGain);
+        o.start(now + i*0.05);
+        o.stop(now + i*0.05 + 0.9);
+      });
+    }
+
+    /* -------------------------
+       Canvas & game
+       ------------------------- */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let playerImg = new Image();
+    playerImg.crossOrigin = "anonymous";
+    playerImg.draggable = false;
+
+    let score = 0;
+    let items = [];
+    let player = {x: canvas.width / 2, y: 340, radius: 30};
+    const WIN_SCORE = 15;
+    let running = false;
+
+    const BASE_SPAWN_CHANCE = 0.04;
+    const MAX_SPAWN_CHANCE = 0.24;
+    const SPAWN_INCREASE_PER_SCORE = 0.01;
+
+    const BASE_SPEED = 3.0;
+    const SPEED_INCREASE_PER_SCORE = 0.15;
+    const MAX_ITEM_SPEED = 10.0;
+
+    function setChar(c){
+      playerImg.src = c === 'kass'
+        ? 'https://i.postimg.cc/Kzn4P7px/ECAD7BCF-0329-42E1-90FF-E727FB39F344.jpg'
+        : 'https://i.postimg.cc/xCKqvGp9/D88BFBF0-E308-463B-97BC-4F2E6AC3C92B.jpg';
+      playerImg.draggable = false;
+
+      charScreen.style.display = 'none';
+      charScreen.classList.remove('active');
+      gameUI.style.display = 'block';
+      gameUI.classList.add('active');
+
+      score = 0;
+      items = [];
+      player.x = canvas.width / 2;
+      scoreEl.innerText = score;
+      running = true;
+      replayBtn.style.display = 'none';
+      winScreen.style.display = 'none';
+      msc.play().catch(()=>{});
+      requestAnimationFrame(loop);
+    }
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function getSpawnChance(){
+      return clamp(BASE_SPAWN_CHANCE + score * SPAWN_INCREASE_PER_SCORE, BASE_SPAWN_CHANCE, MAX_SPAWN_CHANCE);
+    }
+
+    function spawnItem(){
+      const margin = 25;
+      const spawnX = Math.random() * (canvas.width - margin * 2) + margin;
+      const speed = clamp(BASE_SPEED + score * SPEED_INCREASE_PER_SCORE + Math.random() * 1.5, BASE_SPEED, MAX_ITEM_SPEED);
+      items.push({
+        x: spawnX,
+        y: -20,
+        type: Math.random() > 0.3 ? 'heart' : 'phone',
+        img: "📱",
+        speed
+      });
+    }
+
+    function loop(){
+      if(!running) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(player.x, player.y + 30, player.radius, 0, Math.PI*2);
+      ctx.clip();
+      ctx.drawImage(playerImg, player.x - player.radius, player.y, player.radius*2, player.radius*2);
+      ctx.restore();
+
+      if(Math.random() < getSpawnChance()) spawnItem();
+
+      for(let i = items.length - 1; i >= 0; i--){
+        const it = items[i];
+        it.y += it.speed;
+        if(it.type === 'heart'){
+          if(heartImg.complete) ctx.drawImage(heartImg, it.x - 20, it.y, 40, 40);
+          else { ctx.font = "20px serif"; ctx.fillText("❤", it.x - 12, it.y + 28); }
+        } else {
+          ctx.font = "30px serif";
+          ctx.fillText(it.img, it.x - 15, it.y + 30);
+        }
+
+        const dx = it.x - player.x;
+        const dy = it.y - (player.y + 30);
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < player.radius + 12){
+          score++;
+          scoreEl.innerText = score;
+          items.splice(i,1);
+          playCatchSound();
+          if(score >= WIN_SCORE){
+            win();
+            return;
+          }
+        } else if(it.y > canvas.height + 50){
+          items.splice(i,1);
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    function win(){
+      running = false;
+      try { msc.pause(); } catch(e){}
+      playWinSound();
+      gameUI.style.display = 'none';
+      winScreen.style.display = 'block';
+      replayBtn.style.display = 'inline-block';
+      scoreEl.innerText = score;
+    }
+
+    function restartGame(){
+      score = 0;
+      items = [];
+      player.x = canvas.width / 2;
+      scoreEl.innerText = score;
+      winScreen.style.display = 'none';
+      charScreen.style.display = 'block';
+    }
+
+    /* -------------------------
+       Input handling
+       ------------------------- */
+    function getCanvasX(clientX){
+      const rect = canvas.getBoundingClientRect();
+      return clamp(clientX - rect.left, 0, rect.width);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      ensureAudioCtx();
+      try { if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch{}
+      try { msc.play().catch(()=>{}); } catch{}
+      canvas.setPointerCapture(e.pointerId);
+      player.x = getCanvasX(e.clientX);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if(e.pressure === 0 && e.buttons === 0) return;
+      player.x = getCanvasX(e.clientX);
+    });
+    canvas.addEventListener('pointerup', (e) => {
+      try { canvas.releasePointerCapture(e.pointerId); } catch(e){}
+    });
+
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); }, {passive:false});
+    canvas.addEventListener('mousemove', (e) => {
+      if(e.buttons === 1 || !window.PointerEvent) player.x = getCanvasX(e.clientX);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const step = 18;
+      if(e.key === 'ArrowLeft' || e.key === 'a') player.x = clamp(player.x - step, 0, canvas.width);
+      else if(e.key === 'ArrowRight' || e.key === 'd') player.x = clamp(player.x + step, 0, canvas.width);
+      else if(e.key === ' ' || e.key === 'Spacebar') {
+        ensureAudioCtx();
+        msc.play().catch(()=>{});
+      }
+    });
+
+    /* -------------------------
+       Mute / Replay
+       ------------------------- */
+    muteBtn.addEventListener('click', () => {
+      msc.muted = !msc.muted;
+      ensureAudioCtx();
+      if(masterGain) masterGain.gain.value = msc.muted ? 0 : 1;
+      muteBtn.setAttribute('aria-pressed', String(msc.muted));
+      muteBtn.innerText = msc.muted ? 'Unmute' : 'Mute';
+    });
+
+    replayBtn.addEventListener('click', () => {
+      replayBtn.style.display = 'none';
+      winScreen.style.display = 'none';
+      charScreen.style.display = 'block';
+    });
+
+    document.querySelectorAll('img').forEach(img => {
+      img.draggable = false;
+      img.addEventListener('dragstart', (e) => e.preventDefault());
+    });
+
+    document.querySelectorAll('.char-btn').forEach(btn => {
+      btn.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' ') btn.click();
+      });
+    });
+
+    window.__game = { restartGame, setChar, win };
+
+    window.addEventListener('beforeunload', () => { try { msc.pause(); } catch(e){} });
+
+    (function enforceClampLoop(){
+      player.x = clamp(player.x, 0, canvas.width);
+      requestAnimationFrame(enforceClampLoop);
+    })();
+  </script>
+</body>
+</html>
