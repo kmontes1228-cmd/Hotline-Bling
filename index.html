@@ -1,14 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotline Bling Game</title>
-    <script src="game.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        #game {
+            margin: 20px auto;
+            width: 300px;
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Hotline Bling Game</h1>
     <div id="game">
-        <!-- Game content goes here -->
+        <h1>Hotline Bling Game</h1>
+        <p>Click the button to start!</p>
+        <button id="start-button">Start Game</button>
+        <p id="score">Score: 0</p>
     </div>
+    <script>
+        let score = 0;
+        document.getElementById('start-button').onclick = function() {
+            score++;
+            document.getElementById('score').innerText = `Score: ${score}`;
+        };
+    </script>
 </body>
 </html>
